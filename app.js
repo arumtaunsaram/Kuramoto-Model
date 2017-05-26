@@ -52,61 +52,65 @@
     }
 
     LineGraph.prototype.render = function() {
-        if (!this.svg) { // render first time
-            this.y = d3.scaleLinear()
-                .range([this.height, 0]);
+        var self = this;
+        
+        if (!self.svg) { // render first time
+            self.y = d3.scaleLinear()
+                .range([self.height, 0]);
 
-            this.xAxis = d3.axisBottom()
-                .scale(this.x);
-            this.yAxis = d3.axisLeft()
-                .scale(this.y);
+            self.xAxis = d3.axisBottom()
+                .scale(self.x);
+            self.yAxis = d3.axisLeft()
+                .scale(self.y);
 
-            this.line = d3.line()
-                .x(function(d) { return x(d.x); })
-                .y(function(d) { return y(d.y); });
+            self.line = d3.line()
+                .x(function(d) { return self.x(d.x); })
+                .y(function(d) { return self.y(d.y); });
                 // Really need this?
                 //.interpolate("basis");
-            this.svg = this.container.append("svg")
-                .attr("width", this.width + this.margin.left + this.margin.right)
-                .attr("height", this.height + this.margin.top + this.margin.bottom)
+            self.svg = self.container.append("svg")
+                .attr("width", self.width + self.margin.left + self.margin.right)
+                .attr("height", self.height + self.margin.top + self.margin.bottom)
                 .append("g")
-                .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
+                .attr("transform", "translate(" + self.margin.left + "," + self.margin.top + ")");
 
-            //this.x.domain(d3.extent(data, function(d) { return d.x; }));
-            //this.y.domain(d3.extent(data, function(d) { return d.y; }));
+            //self.x.domain(d3.extent(data, function(d) { return d.x; }));
+            //self.y.domain(d3.extent(data, function(d) { return d.y; }));
 
-            this.svg.append("g")
+            self.svg.append("g")
                 .attr("class", "x axis")
-                .attr("transform", "translate(0," + this.height + ")")
-                .call(this.xAxis);
+                .attr("transform", "translate(0," + self.height + ")")
+                .call(self.xAxis);
 
-            this.svg.append("g")
+            self.svg.append("g")
                 .attr("class", "y axis")
-                .call(this.yAxis);
+                .call(self.yAxis);
 
-            this.svg.append("path")
-                .datum(this.data)
+            self.svg.append("path")
+                .datum(self.data)
+                .attr("class", "line")
                 .attr("stroke", "red")
-                .attr("d", this.line);
+                .attr("fill", "none")
+                .attr("d", self.line);
         } else {
             // Resets the target domain
-            this.x.domain(d3.extent(this.data, function(d) { return d.x; }));
-            this.y.domain(d3.extent(this.data, function(d) { return d.y; }));
+            self.x.domain(d3.extent(self.data, function(d) { return d.x; }));
+            self.y.domain(d3.extent(self.data, function(d) { return d.y; }));
 
-            this.svg.select("g.y")
+            self.svg.select("g.y")
                 .transition()
                 .duration(100)
-                .call(this.yAxis);
+                .call(self.yAxis);
 
-            this.svg.select("g.x")
+            self.svg.select("g.x")
                 .transition()
                 .duration(100)
-                .call(this.xAxis);
+                .call(self.xAxis);
 
-            this.svg.selectAll("path.line")
-                .datum(this.data)
+            self.svg.selectAll("path.line")
+                .datum(self.data)
                 .transition(100)
-                .attr("d", this.line);
+                .attr("d", self.line);
         }
     };
 
@@ -139,6 +143,7 @@
                     }
                 }
 
+                var x = 0;
                 window.setInterval(function() {
                     // Add 1 step to all oscillators
                     for (var i = 0; i < oscillators.length; i++) {
@@ -148,9 +153,10 @@
                     // Shows last thetas(debug)
                     for (i = 0; i < oscillators.length; i++) {
                         console.log("Osc #" + i + ":" + oscillators[ i ].lastTheta);
-                        debugGraphs[ i ].addValue(oscillators[ i ].lastTheta);
+                        debugGraphs[ i ].addValue({x: x, y: oscillators[ i ].lastTheta});
                         debugGraphs[ i ].render();
                     }
+                    x++;
                 }, 300);
 
             }
