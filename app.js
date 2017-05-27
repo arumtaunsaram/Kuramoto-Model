@@ -42,6 +42,7 @@
     function LineGraph() {
         // Specifies the parent element this graph add to.
        this.container = d3.select("#debugLineGraphs");
+       this.maxLength = 100;
        this.width = 960;
        this.height = 200;
        var margin = {};
@@ -109,12 +110,16 @@
 
             self.svg.selectAll("path.line")
                 .datum(self.data)
-                .transition(100)
+                //.transition(100)
                 .attr("d", self.line);
         }
     };
 
     LineGraph.prototype.addValue = function(value) {
+        if (this.data.length > this.maxLength) {
+            // Removes the current first element.
+            this.data.shift();
+        }
         this.data.push(value);
     };
 
@@ -134,6 +139,7 @@
 
                 // Sets coupled oscillators
                 for (var target = 0; target < oscillators.length; target++) {
+
                     for (i = 0; i < oscillators.length; i++) {
                         if (i === target) {
                             // Skips if the setting target and the oscillator to be set are same.
@@ -152,7 +158,7 @@
 
                     // Shows last thetas(debug)
                     for (i = 0; i < oscillators.length; i++) {
-                        console.log("Osc #" + i + ":" + oscillators[ i ].lastTheta);
+                        //console.log("Osc #" + i + ":" + oscillators[ i ].lastTheta);
                         debugGraphs[ i ].addValue({x: x, y: oscillators[ i ].lastTheta});
                         debugGraphs[ i ].render();
                     }
