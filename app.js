@@ -125,16 +125,32 @@
 
 
     window.App = !(typeof window['App'] !== 'undefined') ? (function () {
+
+        var STEPS_TO_REMEMBER = 100;
+
         return {
             init: function () {
                 var oscillators = [];
+
+                /**
+                 * Stores old values of the oscillators.
+                 * @type {Array.<Array.<Number>>}
+                 * */
+                var oscillatorValues = [
+                    // Elements such below come here
+                    // - Time series values (an array) of oscillator #1,
+                    // - Time series values (an array) of oscillator #2,..
+                ];
+
                 /** @type Array<LineGraph> */
                 var debugGraphs = [];
 
                 for (var i = 0; i < 2; i++) {
-                    // Constructs oscillators.
+                    // Constructs an oscillator.
                     oscillators.push(new Oscillator());
-                    debugGraphs.push(new LineGraph());
+                    // Constructs an oscillator value holder.
+                    oscillatorValues.push([]);
+                    //debugGraphs.push(new LineGraph());
                 }
 
                 // Sets coupled oscillators
@@ -153,15 +169,28 @@
                 window.setInterval(function() {
                     // Add 1 step to all oscillators
                     for (var i = 0; i < oscillators.length; i++) {
+
                       oscillators[i].step();
+
+
+                      // Saves the value.
+
+                      if (oscillatorValues[i].length >= STEPS_TO_REMEMBER) {
+                          // Removes the oldest value if the array exceeds the limit.
+                          oscillatorValues[i].shift();
+                      }
+                      oscillatorValues[i].push(oscillators[i].lastTheta);
                     }
+                    console.log("0th element in step #" + x);
+                    console.log(oscillatorValues[0][0]);
+                    console.log(oscillatorValues[1][0]);
 
                     // Shows last thetas(debug)
-                    for (i = 0; i < oscillators.length; i++) {
-                        //console.log("Osc #" + i + ":" + oscillators[ i ].lastTheta);
-                        debugGraphs[ i ].addValue({x: x, y: oscillators[ i ].lastTheta});
-                        debugGraphs[ i ].render();
-                    }
+                    //for (i = 0; i < oscillators.length; i++) {
+                    //    //console.log("Osc #" + i + ":" + oscillators[ i ].lastTheta);
+                    //    debugGraphs[ i ].addValue({x: x, y: oscillators[ i ].lastTheta});
+                    //    debugGraphs[ i ].render();
+                    //}
                     x++;
                 }, 300);
 
