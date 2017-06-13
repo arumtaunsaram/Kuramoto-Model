@@ -37,9 +37,10 @@
 
     /**
      * This class uses d3.js
+     * @param {Array.<Array.<Number>>} data
      * @constructor
      */
-    function LineGraph() {
+    function LineGraph(data) {
         // Specifies the parent element this graph add to.
        this.container = d3.select("#debugLineGraphs");
        this.maxLength = 100;
@@ -48,7 +49,7 @@
        var margin = {};
        margin.top = margin.right = margin.bottom = margin.left = 30;
        this.margin = margin;
-       this.data = [];
+       this.data = data;
        this.x = d3.scaleLinear().range([0, this.width]);
     }
 
@@ -65,8 +66,8 @@
                 .scale(self.y);
 
             self.line = d3.line()
-                .x(function(d) { return self.x(d.x); })
-                .y(function(d) { return self.y(d.y); });
+                .x(function(d, i) { console.log("(x) d[" + i + "]:" + d[i] + "," + "i:" + i);return self.x(i); })
+                .y(function(d, i) { console.log("(y) d[" + i + "]:" + d[i] + "," + "i:" + i);return self.y(d[ i ]); });
                 // Really need this?
                 //.interpolate("basis");
             self.svg = self.container.append("svg")
@@ -87,16 +88,24 @@
                 .attr("class", "y axis")
                 .call(self.yAxis);
 
-            self.svg.append("path")
-                .datum(self.data)
+            // TODO: dataの数だけ(idをつけて)pathを追加する
+
+            self.lines = self.svg.append("g")
+                .attr("class", "lines");
+
+            self.linesWithData = self.lines
+                .selectAll("path.line")
+                .data(self.data)
+                .enter()
+                .append("path")
                 .attr("class", "line")
                 .attr("stroke", "red")
                 .attr("fill", "none")
                 .attr("d", self.line);
         } else {
-            // Resets the target domain
-            self.x.domain(d3.extent(self.data, function(d) { return d.x; }));
-            self.y.domain(d3.extent(self.data, function(d) { return d.y; }));
+            // Resets the target domain (min and max values of each axis)
+            self.x.domain([0, d3.max(self.data, function(d) {return d.length;})]);
+            self.y.domain(d3.extent(d3.merge(self.data)));
 
             self.svg.select("g.y")
                 .transition()
@@ -108,10 +117,21 @@
                 .duration(100)
                 .call(self.xAxis);
 
-            self.svg.selectAll("path.line")
-                .datum(self.data)
-                //.transition(100)
-                .attr("d", self.line);
+            // TODO: pathを選んでdataで更新する
+            self.linesWithData.exit();
+            //self.data.forEach(function(timeSeries, i){
+                self.linesWithData.selectAll("path.line")
+                    .data(self.data)
+                    .enter()
+                    //.transition(100)
+                    .attr("d", self.line);
+            //});
+            //
+            //     console.log("inside the foreach (i:" + i + ") and timeSeries:");
+            //     console.log(timeSeries);
+            //     console.log(self.lines.selectAll("path.line"));
+            //
+            //
         }
     };
 
@@ -127,6 +147,7 @@
     window.App = !(typeof window['App'] !== 'undefined') ? (function () {
 
         var STEPS_TO_REMEMBER = 100;
+        var intervalTimer = null;
 
         return {
             init: function () {
@@ -150,8 +171,9 @@
                     oscillators.push(new Oscillator());
                     // Constructs an oscillator value holder.
                     oscillatorValues.push([]);
-                    //debugGraphs.push(new LineGraph());
+                    //debugGraphs.push();
                 }
+                var lineGraph = new LineGraph(oscillatorValues);
 
                 // Sets coupled oscillators
                 for (var target = 0; target < oscillators.length; target++) {
@@ -166,7 +188,7 @@
                 }
 
                 var x = 0;
-                window.setInterval(function() {
+                intervalTimer = window.setInterval(function() {
                     // Add 1 step to all oscillators
                     for (var i = 0; i < oscillators.length; i++) {
 
@@ -181,10 +203,8 @@
                       }
                       oscillatorValues[i].push(oscillators[i].lastTheta);
                     }
-                    console.log("0th element in step #" + x);
-                    console.log(oscillatorValues[0][0]);
-                    console.log(oscillatorValues[1][0]);
 
+                    lineGraph.render();
                     // Shows last thetas(debug)
                     //for (i = 0; i < oscillators.length; i++) {
                     //    //console.log("Osc #" + i + ":" + oscillators[ i ].lastTheta);
@@ -194,6 +214,12 @@
                     x++;
                 }, 300);
 
+            },
+            stop: function() {
+                if (intervalTimer != null)
+                {
+                    clearInterval(intervalTimer);
+                }
             }
         };
     })() : window.app;
