@@ -67,7 +67,7 @@
 
             self.line = d3.line()
                 .x(function(d, i) { console.log("(x) d[" + i + "]:" + d[i] + "," + "i:" + i);return self.x(i); })
-                .y(function(d, i) { console.log("(y) d[" + i + "]:" + d[i] + "," + "i:" + i);return self.y(d[ i ]); });
+                .y(function(d, i) { console.log("(y) d[" + i + "]:" + d[i] + "," + "i:" + i + ",d:");console.log(d);return self.y(d); });
                 // Really need this?
                 //.interpolate("basis");
             self.svg = self.container.append("svg")
@@ -95,7 +95,7 @@
 
             self.linesWithData = self.lines
                 .selectAll("path.line")
-                .data(self.data)
+                .data(self.data, function(ts, i) {return i;})
                 .enter()
                 .append("path")
                 .attr("class", "line")
@@ -118,12 +118,11 @@
                 .call(self.xAxis);
 
             // TODO: pathを選んでdataで更新する
-            self.linesWithData.exit();
+            //self.linesWithData.exit();
             //self.data.forEach(function(timeSeries, i){
-                self.linesWithData.selectAll("path.line")
+                self.lines
+                    .selectAll("path.line")
                     .data(self.data)
-                    .enter()
-                    //.transition(100)
                     .attr("d", self.line);
             //});
             //
