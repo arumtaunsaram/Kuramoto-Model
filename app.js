@@ -1,38 +1,48 @@
 (function() {
+
+    /**
+     * This represents one oscillator of Kuramoto-Network.
+     * @constructor
+     */
     var Oscillator = function () {
-        var _ = {};
-        /** @type Array */
-        _.coupled = [];
-        _.omega = 0;
-        _.lastTheta = 0;
+        /**
+         * References to coupled oscillators.
+         * @type {Array.<Oscillator>} */
+        this.coupled = [];
+        this.omega = 0;
+        this.nextTheta = 0;
+        this.lastTheta = 0;
 
         // Coefficient of 2nd term (K in Wikipedia)
-        _.coeff = 1.0;
-
-        _.addCoupledOscillator = function (oscilattor) {
-            this.coupled.push(oscilattor);
-        };
-
-        _.step = function () {
-            // 1st term
-            // Value between 0.0 and 1.0 will be stored
-            this.omega = Math.random();
-
-            // Calculates the 2nd term
-            if (this.coupled.length < 1) {
-                this.lastTheta = this.omega;
-                return;
-            }
-
-            var sum = 0.0;
-            for (var i = 0; i < this.coupled.length; i++) {
-                sum += Math.sin(this.lastTheta - this.coupled[ i ].lastTheta);
-            }
-            this.lastTheta = this.omega - ((this.coeff / this.coupled.length) * sum);
-        };
-
-        return _;
+        this.coeff = 1.0;
     };
+
+    Oscillator.prototype.addCoupledOscillator = function (oscilattor) {
+        this.coupled.push(oscilattor);
+    };
+
+    Oscillator.prototype.calculateNextTheta = function () {
+        // 1st term
+        // Value between 0.0 and 1.0 will be stored
+        this.omega = Math.random();
+
+        // Calculates the 2nd term
+        if (this.coupled.length < 1) {
+            this.nextTheta = this.omega;
+            return;
+        }
+
+        var sum = 0.0;
+        for (var i = 0; i < this.coupled.length; i++) {
+            sum += Math.sin(this.lastTheta - this.coupled[ i ].lastTheta);
+        }
+        this.nextTheta = this.omega - ((this.coeff / this.coupled.length) * sum);
+    };
+
+    Oscillator.prototype.updateTheta = function () {
+        this.lastTheta = this.nextTheta;
+    };
+
 
 
     /**
@@ -51,6 +61,8 @@
        this.margin = margin;
        this.data = data;
        this.x = d3.scaleLinear().range([0, this.width]);
+
+       this.color = d3.scaleOrdinal(d3.schemeCategory10);
     }
 
     LineGraph.prototype.render = function() {
@@ -66,8 +78,8 @@
                 .scale(self.y);
 
             self.line = d3.line()
-                .x(function(d, i) { console.log("(x) d[" + i + "]:" + d[i] + "," + "i:" + i);return self.x(i); })
-                .y(function(d, i) { console.log("(y) d[" + i + "]:" + d[i] + "," + "i:" + i + ",d:");console.log(d);return self.y(d); });
+                .x(function(d, i) { return self.x(i); })
+                .y(function(d) { return self.y(d); });
                 // Really need this?
                 //.interpolate("basis");
             self.svg = self.container.append("svg")
@@ -87,8 +99,6 @@
             self.svg.append("g")
                 .attr("class", "y axis")
                 .call(self.yAxis);
-
-            // TODO: dataの数だけ(idをつけて)pathを追加する
 
             self.lines = self.svg.append("g")
                 .attr("class", "lines");
@@ -117,29 +127,12 @@
                 .duration(100)
                 .call(self.xAxis);
 
-            // TODO: pathを選んでdataで更新する
-            //self.linesWithData.exit();
-            //self.data.forEach(function(timeSeries, i){
-                self.lines
-                    .selectAll("path.line")
-                    .data(self.data)
-                    .attr("d", self.line);
-            //});
-            //
-            //     console.log("inside the foreach (i:" + i + ") and timeSeries:");
-            //     console.log(timeSeries);
-            //     console.log(self.lines.selectAll("path.line"));
-            //
-            //
-        }
-    };
+            self.lines
+                .selectAll("path.line")
+                .data(self.data)
+                .attr("d", self.line).style("stroke", function(d, i) {return self.color(i);});
 
-    LineGraph.prototype.addValue = function(value) {
-        if (this.data.length > this.maxLength) {
-            // Removes the current first element.
-            this.data.shift();
         }
-        this.data.push(value);
     };
 
 
@@ -162,15 +155,12 @@
                     // - Time series values (an array) of oscillator #2,..
                 ];
 
-                /** @type Array<LineGraph> */
-                var debugGraphs = [];
 
-                for (var i = 0; i < 2; i++) {
+                for (var i = 0; i < 5; i++) {
                     // Constructs an oscillator.
                     oscillators.push(new Oscillator());
                     // Constructs an oscillator value holder.
                     oscillatorValues.push([]);
-                    //debugGraphs.push();
                 }
                 var lineGraph = new LineGraph(oscillatorValues);
 
@@ -186,21 +176,23 @@
                     }
                 }
 
+                // Sets up interval oscillator updates.
                 var x = 0;
                 intervalTimer = window.setInterval(function() {
-                    // Add 1 step to all oscillators
+
                     for (var i = 0; i < oscillators.length; i++) {
+                        oscillators[i].calculateNextTheta();
+                    }
 
-                      oscillators[i].step();
+                    for (var i = 0; i < oscillators.length; i++) {
+                        oscillators[i].updateTheta();
 
-
-                      // Saves the value.
-
-                      if (oscillatorValues[i].length >= STEPS_TO_REMEMBER) {
-                          // Removes the oldest value if the array exceeds the limit.
-                          oscillatorValues[i].shift();
-                      }
-                      oscillatorValues[i].push(oscillators[i].lastTheta);
+                        // Saves the value onto oscillatorValues.
+                        if (oscillatorValues[i].length >= STEPS_TO_REMEMBER) {
+                            // Removes the oldest value if the array exceeds the limit.
+                            oscillatorValues[i].shift();
+                        }
+                        oscillatorValues[i].push(oscillators[i].lastTheta);
                     }
 
                     lineGraph.render();
@@ -215,7 +207,7 @@
 
             },
             stop: function() {
-                if (intervalTimer != null)
+                if (intervalTimer !== null)
                 {
                     clearInterval(intervalTimer);
                 }
