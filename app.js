@@ -53,7 +53,6 @@
     function LineGraph(data) {
         // Specifies the parent element this graph add to.
        this.container = d3.select("#debugLineGraphs");
-       this.maxLength = 100;
        this.width = 960;
        this.height = 200;
        var margin = {};
@@ -138,6 +137,7 @@
 
     window.App = !(typeof window['App'] !== 'undefined') ? (function () {
 
+        var NUMBERS_OF_OSCILLATOR = 5;
         var STEPS_TO_REMEMBER = 100;
         var intervalTimer = null;
 
@@ -154,13 +154,30 @@
                     // - Time series values (an array) of oscillator #1,
                     // - Time series values (an array) of oscillator #2,..
                 ];
+                var orderParameterTable = document.getElementById("orderParameterTable");
+                /* @type {Array.<Array.{Element(td)}>} */
+                var orderParameterCells = [];
 
-
-                for (var i = 0; i < 5; i++) {
+                for (var i = 0; i < NUMBERS_OF_OSCILLATOR; i++) {
                     // Constructs an oscillator.
                     oscillators.push(new Oscillator());
                     // Constructs an oscillator value holder.
                     oscillatorValues.push([]);
+
+                    // Appends a row of the order parameter table
+                    var tr = document.createElement("tr");
+                    var cells = [];
+                    for (var k = 0; k < NUMBERS_OF_OSCILLATOR; k++) {
+                        var td = document.createElement("td");
+                        if (k === i) {
+                            td.appendChild(document.createTextNode("Osc #" + i));
+                            td.setAttribute("class", "diagonal");
+                        }
+                        tr.appendChild(td);
+                        cells.push(td);
+                    }
+                    orderParameterTable.appendChild(tr);
+                    orderParameterCells.push(cells);
                 }
                 var lineGraph = new LineGraph(oscillatorValues);
 
@@ -198,7 +215,25 @@
                         }
                         oscillatorValues[i].push(oscillators[i].lastTheta);
 
-                        // Calculates order parameter components
+                        // Updates the order parameter table.
+                        for (var k = i + 1; k < oscillators.length; k++) {
+                            // Calculates an order parameter just for the 2 oscillators.
+                            var real = Math.cos(oscillators[i].lastTheta) + Math.cos(oscillators[k].lastTheta);
+                            var imaginary = Math.sin(oscillators[i].lastTheta) + Math.sin(oscillators[k].lastTheta);
+                            var partialOrderParameter = Math.sqrt(Math.pow(real, 2) + Math.pow(imaginary, 2)) / 2;
+
+                            // Updates the target cell.
+                            orderParameterCells[i][k].innerText =  partialOrderParameter.toFixed(3);
+                            if (partialOrderParameter <= 0.8) {
+                                orderParameterCells[i][k].style.backgroundColor = "#ffffff";
+                            } else {
+                                orderParameterCells[i][k].style.backgroundColor = "#" +
+                                    Math.round((partialOrderParameter - 0.8) * (255/0.2)).toString(16)
+                                    + "0000";
+                            }
+                        }
+
+                        // Calculates order parameter components for the whole system (all oscillators).
                         sum_of_euler_real += Math.cos(oscillators[i].lastTheta);
                         sum_of_euler_imaginary += Math.sin(oscillators[i].lastTheta);
                     }
@@ -207,12 +242,7 @@
                     // Calculates the order parameter
                     var absoluteSum = Math.sqrt(Math.pow(sum_of_euler_real, 2) + Math.pow(sum_of_euler_imaginary, 2));
                     console.log("m=" + (absoluteSum / oscillators.length));
-                    // Shows last thetas(debug)
-                    //for (i = 0; i < oscillators.length; i++) {
-                    //    //console.log("Osc #" + i + ":" + oscillators[ i ].lastTheta);
-                    //    debugGraphs[ i ].addValue({x: x, y: oscillators[ i ].lastTheta});
-                    //    debugGraphs[ i ].render();
-                    //}
+
                     x++;
                 }, 300);
 
