@@ -166,13 +166,14 @@
 
                 // Sets coupled oscillators
                 for (var target = 0; target < oscillators.length; target++) {
-
+                    console.log("connecting #" + target + " to:");
                     for (i = 0; i < oscillators.length; i++) {
                         if (i === target) {
                             // Skips if the setting target and the oscillator to be set are same.
                             continue;
                         }
                         oscillators[target].addCoupledOscillator(oscillators[i]);
+                        console.log("\t#" + i);
                     }
                 }
 
