@@ -184,6 +184,9 @@
                         oscillators[i].calculateNextTheta();
                     }
 
+                    // Its absolute value will be taken when we calculate the order parameter.
+                    var sum_of_euler_real = 0.0;
+                    var sum_of_euler_imaginary = 0.0;
                     for (var i = 0; i < oscillators.length; i++) {
                         oscillators[i].updateTheta();
 
@@ -193,9 +196,16 @@
                             oscillatorValues[i].shift();
                         }
                         oscillatorValues[i].push(oscillators[i].lastTheta);
+
+                        // Calculates order parameter components
+                        sum_of_euler_real += Math.cos(oscillators[i].lastTheta);
+                        sum_of_euler_imaginary += Math.sin(oscillators[i].lastTheta);
                     }
 
                     lineGraph.render();
+                    // Calculates the order parameter
+                    var absoluteSum = Math.sqrt(Math.pow(sum_of_euler_real, 2) + Math.pow(sum_of_euler_imaginary, 2));
+                    console.log("m=" + (absoluteSum / oscillators.length));
                     // Shows last thetas(debug)
                     //for (i = 0; i < oscillators.length; i++) {
                     //    //console.log("Osc #" + i + ":" + oscillators[ i ].lastTheta);
