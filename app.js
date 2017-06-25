@@ -50,7 +50,7 @@
      * @param {Array.<Array.<Number>>} data
      * @constructor
      */
-    function LineGraph(data) {
+    function LineGraph(data, orderParameters) {
         // Specifies the parent element this graph add to.
        this.container = d3.select("#debugLineGraphs");
        this.width = 960;
@@ -59,6 +59,7 @@
        margin.top = margin.right = margin.bottom = margin.left = 30;
        this.margin = margin;
        this.data = data;
+       this.orderParameters = orderParameters;
        this.x = d3.scaleLinear().range([0, this.width]);
 
        this.color = d3.scaleOrdinal(d3.schemeCategory10);
@@ -71,16 +72,29 @@
             self.y = d3.scaleLinear()
                 .range([self.height, 0]);
 
+            self.yOrderParam = d3.scaleLinear()
+                .range([self.height, 0])
+            self.yOrderParam.domain([0,1]);
+
             self.xAxis = d3.axisBottom()
                 .scale(self.x);
             self.yAxis = d3.axisLeft()
                 .scale(self.y);
+
+            self.yAxis2 = d3.axisRight()
+                .scale(self.yOrderParam);
+
 
             self.line = d3.line()
                 .x(function(d, i) { return self.x(i); })
                 .y(function(d) { return self.y(d); });
                 // Really need this?
                 //.interpolate("basis");
+
+            self.orderParamLine = d3.line()
+                .x(function(d, i) { /*console.log("x)d:" + d + ",i:" + i);*/ return self.x(i); })
+                .y(function(d) { /*console.log("y)d:" + d);*/ return self.yOrderParam(d);});
+
             self.svg = self.container.append("svg")
                 .attr("width", self.width + self.margin.left + self.margin.right)
                 .attr("height", self.height + self.margin.top + self.margin.bottom)
@@ -99,10 +113,14 @@
                 .attr("class", "y axis")
                 .call(self.yAxis);
 
+            self.svg.append("g")
+                .attr("class", "y axis2")
+                .call(self.yAxis2);
+
             self.lines = self.svg.append("g")
                 .attr("class", "lines");
 
-            self.linesWithData = self.lines
+            self.lines
                 .selectAll("path.line")
                 .data(self.data, function(ts, i) {return i;})
                 .enter()
@@ -111,6 +129,17 @@
                 .attr("stroke", "red")
                 .attr("fill", "none")
                 .attr("d", self.line);
+
+            self.orderParameter = self.svg.append("g")
+                .attr("class", "orderParameterLine");
+
+            self.orderParameter
+                .append("path")
+                .data(self.orderParameters)
+                .attr("fill", "none")
+                .attr("stroke", "silver")
+                .attr("d", self.orderParamLine);
+
         } else {
             // Resets the target domain (min and max values of each axis)
             self.x.domain([0, d3.max(self.data, function(d) {return d.length;})]);
@@ -131,6 +160,15 @@
                 .data(self.data)
                 .attr("d", self.line).style("stroke", function(d, i) {return self.color(i);});
 
+            //console.log(
+            //self.orderParameter
+            //    .select("path")
+            //);
+            //console.log(self.orderParameters);
+            self.orderParameter
+                .select("path")
+                .attr("stroke", "black")
+                .attr("d", self.orderParamLine(self.orderParameters));
         }
     };
 
@@ -154,6 +192,7 @@
                     // - Time series values (an array) of oscillator #1,
                     // - Time series values (an array) of oscillator #2,..
                 ];
+                var orderParameters = [];
                 var orderParameterTable = document.getElementById("orderParameterTable");
                 /* @type {Array.<Array.{Element(td)}>} */
                 var orderParameterCells = [];
@@ -179,7 +218,7 @@
                     orderParameterTable.appendChild(tr);
                     orderParameterCells.push(cells);
                 }
-                var lineGraph = new LineGraph(oscillatorValues);
+                var lineGraph = new LineGraph(oscillatorValues, orderParameters);
 
                 // Sets coupled oscillators
                 for (var target = 0; target < oscillators.length; target++) {
@@ -238,10 +277,16 @@
                         sum_of_euler_imaginary += Math.sin(oscillators[i].lastTheta);
                     }
 
-                    lineGraph.render();
+                    if (orderParameters.length >= STEPS_TO_REMEMBER) {
+                        // Removes the oldest value if the array exceeds the limit.
+                        orderParameters.shift();
+                    }
                     // Calculates the order parameter
                     var absoluteSum = Math.sqrt(Math.pow(sum_of_euler_real, 2) + Math.pow(sum_of_euler_imaginary, 2));
                     console.log("m=" + (absoluteSum / oscillators.length));
+                    orderParameters.push((absoluteSum / oscillators.length));
+
+                    lineGraph.render();
 
                     x++;
                 }, 300);
