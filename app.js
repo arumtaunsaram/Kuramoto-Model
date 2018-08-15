@@ -12,10 +12,10 @@
         this.omega = 0;
         this.nextTheta = 0;
         this.lastTheta = 0;
-
-        // Coefficient of 2nd term (K in Wikipedia)
-        this.coeff = 3.0;
     };
+
+    // Coefficient of 2nd term (K in Wikipedia)
+    Oscillator.coeff = 1.0;
 
     Oscillator.prototype.addCoupledOscillator = function (oscilattor) {
         this.coupled.push(oscilattor);
@@ -23,8 +23,8 @@
 
     Oscillator.prototype.calculateNextTheta = function () {
         // 1st term
-        // Value between 0.0 and 1.0 will be stored
-        this.omega = Math.random();
+        // Value between -0.5 and 0.5 will be stored
+        this.omega = Math.random() - 0.5;
 
         // Calculates the 2nd term
         if (this.coupled.length < 1) {
@@ -36,7 +36,7 @@
         for (var i = 0; i < this.coupled.length; i++) {
             sum += Math.sin(this.lastTheta - this.coupled[ i ].lastTheta);
         }
-        this.nextTheta = this.omega - ((this.coeff / this.coupled.length) * sum);
+        this.nextTheta = this.omega - ((Oscillator.coeff / this.coupled.length) * sum);
     };
 
     Oscillator.prototype.updateTheta = function () {
@@ -203,6 +203,16 @@
                 var orderParameterTable = document.getElementById("orderParameterTable");
                 /* @type {Array.<Array.{Element(td)}>} */
                 var orderParameterCells = [];
+
+                // Set K
+                var k = parseInt(document.getElementById("k").value,10);
+                if (Number.isNaN(k)) {
+                    alert("K is NaN");
+                    return;
+                } else {
+                    Oscillator.coeff = k;
+                }
+
 
                 for (var i = 0; i < NUMBERS_OF_OSCILLATOR; i++) {
                     // Constructs an oscillator.
