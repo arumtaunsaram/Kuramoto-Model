@@ -205,7 +205,7 @@
                 var orderParameterCells = [];
 
                 // Set K
-                var k = parseInt(document.getElementById("k").value,10);
+                var k = parseFloat(document.getElementById("k").value);
                 if (Number.isNaN(k)) {
                     alert("K is NaN");
                     return;
@@ -285,13 +285,15 @@
                             // Updates the target cell.
                             if (orderParameterCells[i][k] instanceof OrderParameterCell) {
                                 orderParameterCells[i][k].text.textContent =  partialOrderParameter.toFixed(3);
-                                if (partialOrderParameter <= 0.8) {
-                                    orderParameterCells[i][k].td.style.backgroundColor = "#ffffff";
-                                } else {
-                                    orderParameterCells[i][k].td.style.backgroundColor = "#" +
-                                        Math.round((partialOrderParameter - 0.8) * (255/0.2)).toString(16)
-                                        + "0000";
-                                }
+                                // Updates: #FFFFFF
+                                //             ^^^^ here, like if 0.0 -> FFFFFF, 1.0 -> FF0000
+                                var blueOrGreen = Math.round((1 - partialOrderParameter) * 255).toString(16);
+                                // Add leading zeros
+                                blueOrGreen = ("00" + blueOrGreen).substr(-2);
+                                console.log("mapped " + partialOrderParameter + " to " + blueOrGreen)
+                                orderParameterCells[i][k].td.style.backgroundColor = "#FF" +
+                                    blueOrGreen + blueOrGreen;
+                                console.log("#FF" + blueOrGreen + blueOrGreen)
                             }
                         }
 
