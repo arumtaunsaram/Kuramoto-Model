@@ -14,7 +14,7 @@
         this.lastTheta = 0;
 
         // Coefficient of 2nd term (K in Wikipedia)
-        this.coeff = 1.0;
+        this.coeff = 3.0;
     };
 
     Oscillator.prototype.addCoupledOscillator = function (oscilattor) {
@@ -115,6 +115,7 @@
 
             self.svg.append("g")
                 .attr("class", "y axis2")
+                .attr("transform", "translate(" + self.width + ",0)")
                 .call(self.yAxis2);
 
             self.lines = self.svg.append("g")
@@ -160,11 +161,6 @@
                 .data(self.data)
                 .attr("d", self.line).style("stroke", function(d, i) {return self.color(i);});
 
-            //console.log(
-            //self.orderParameter
-            //    .select("path")
-            //);
-            //console.log(self.orderParameters);
             self.orderParameter
                 .select("path")
                 .attr("stroke", "black")
@@ -172,11 +168,22 @@
         }
     };
 
+    /**
+     *
+     * @constructor
+     */
+    function OrderParameterCell() {
+        this.td = document.createElement("td");
+        this.svg = d3.select(this.td).append("svg");
+        this.text = document.createTextNode("");
+        this.td.appendChild(this.text);
+    }
+
 
     window.App = !(typeof window['App'] !== 'undefined') ? (function () {
 
         var NUMBERS_OF_OSCILLATOR = 5;
-        var STEPS_TO_REMEMBER = 100;
+        var STEPS_TO_REMEMBER = 50;
         var intervalTimer = null;
 
         return {
@@ -207,13 +214,17 @@
                     var tr = document.createElement("tr");
                     var cells = [];
                     for (var k = 0; k < NUMBERS_OF_OSCILLATOR; k++) {
-                        var td = document.createElement("td");
                         if (k === i) {
+                            var td = document.createElement("td");
                             td.appendChild(document.createTextNode("Osc #" + i));
                             td.setAttribute("class", "diagonal");
+                            tr.appendChild(td);
+                            cells.push(td);
+                        } else {
+                            var cell = new OrderParameterCell();
+                            tr.appendChild(cell.td);
+                            cells.push(cell);
                         }
-                        tr.appendChild(td);
-                        cells.push(td);
                     }
                     orderParameterTable.appendChild(tr);
                     orderParameterCells.push(cells);
@@ -262,13 +273,15 @@
                             var partialOrderParameter = Math.sqrt(Math.pow(real, 2) + Math.pow(imaginary, 2)) / 2;
 
                             // Updates the target cell.
-                            orderParameterCells[i][k].innerText =  partialOrderParameter.toFixed(3);
-                            if (partialOrderParameter <= 0.8) {
-                                orderParameterCells[i][k].style.backgroundColor = "#ffffff";
-                            } else {
-                                orderParameterCells[i][k].style.backgroundColor = "#" +
-                                    Math.round((partialOrderParameter - 0.8) * (255/0.2)).toString(16)
-                                    + "0000";
+                            if (orderParameterCells[i][k] instanceof OrderParameterCell) {
+                                orderParameterCells[i][k].text.textContent =  partialOrderParameter.toFixed(3);
+                                if (partialOrderParameter <= 0.8) {
+                                    orderParameterCells[i][k].td.style.backgroundColor = "#ffffff";
+                                } else {
+                                    orderParameterCells[i][k].td.style.backgroundColor = "#" +
+                                        Math.round((partialOrderParameter - 0.8) * (255/0.2)).toString(16)
+                                        + "0000";
+                                }
                             }
                         }
 
