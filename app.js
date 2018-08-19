@@ -12,6 +12,10 @@
         this.omega = 0;
         this.nextTheta = 0;
         this.lastTheta = 0;
+
+        // 1st term
+        // Value between -0.5 and 0.5 will be stored
+        this.omega = Math.random() - 0.5;
     };
 
     // Coefficient of 2nd term (K in Wikipedia)
@@ -22,9 +26,6 @@
     };
 
     Oscillator.prototype.calculateNextTheta = function () {
-        // 1st term
-        // Value between -0.5 and 0.5 will be stored
-        this.omega = Math.random() - 0.5;
 
         // Calculates the 2nd term
         if (this.coupled.length < 1) {
@@ -36,7 +37,7 @@
         for (var i = 0; i < this.coupled.length; i++) {
             sum += Math.sin(this.lastTheta - this.coupled[ i ].lastTheta);
         }
-        this.nextTheta = this.omega - ((Oscillator.coeff / this.coupled.length) * sum);
+        this.nextTheta = Math.sin(this.omega - ((Oscillator.coeff / this.coupled.length) * sum));
     };
 
     Oscillator.prototype.updateTheta = function () {
