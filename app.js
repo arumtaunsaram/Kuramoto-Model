@@ -44,7 +44,9 @@
         this.lastTheta = this.nextTheta;
     };
 
-
+    Oscillator.prototype.getPhase = function () {
+        return Math.asin(this.lastTheta);
+    }
 
     /**
      * This class uses d3.js
@@ -279,8 +281,8 @@
                         // Updates the order parameter table.
                         for (var k = i + 1; k < oscillators.length; k++) {
                             // Calculates an order parameter just for the 2 oscillators.
-                            var real = Math.cos(oscillators[i].lastTheta) + Math.cos(oscillators[k].lastTheta);
-                            var imaginary = Math.sin(oscillators[i].lastTheta) + Math.sin(oscillators[k].lastTheta);
+                            var real = Math.cos(oscillators[i].getPhase()) + Math.cos(oscillators[k].getPhase());
+                            var imaginary = Math.sin(oscillators[i].getPhase()) + Math.sin(oscillators[k].getPhase());
                             var partialOrderParameter = Math.sqrt(Math.pow(real, 2) + Math.pow(imaginary, 2)) / 2;
 
                             // Updates the target cell.
@@ -299,8 +301,8 @@
                         }
 
                         // Calculates order parameter components for the whole system (all oscillators).
-                        sum_of_euler_real += Math.cos(oscillators[i].lastTheta);
-                        sum_of_euler_imaginary += Math.sin(oscillators[i].lastTheta);
+                        sum_of_euler_real += Math.cos(oscillators[i].getPhase());
+                        sum_of_euler_imaginary += Math.sin(oscillators[i].getPhase());
                     }
 
                     if (orderParameters.length >= STEPS_TO_REMEMBER) {
