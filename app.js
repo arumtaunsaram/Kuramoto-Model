@@ -37,7 +37,7 @@
         for (var i = 0; i < this.coupled.length; i++) {
             sum += Math.sin(this.lastTheta - this.coupled[ i ].lastTheta);
         }
-        this.nextTheta = Math.sin(this.omega - ((Oscillator.coeff / this.coupled.length) * sum));
+        this.nextTheta = Math.sin(this.omega + ((Oscillator.coeff / this.coupled.length) * sum));
     };
 
     Oscillator.prototype.updateTheta = function () {
