@@ -1,5 +1,6 @@
 (function() {
 
+    var url = new URL(location.href);
     /**
      * This represents one oscillator of Kuramoto-Network.
      * @constructor
@@ -14,8 +15,9 @@
         this.lastTheta = 0;
 
         // 1st term
-        // Value between -0.5 and 0.5 will be stored
-        this.omega = Math.random() - 0.5;
+        // Value between 0 and 1.0 will be stored
+        var times = parseInt(url.searchParams.get("gaussianLargeness"), 10);
+        this.omega = gaussianRand(isNaN(times) ? 10 : times );
     };
 
     // Coefficient of 2nd term (K in Wikipedia)
@@ -35,7 +37,7 @@
 
         var sum = 0.0;
         for (var i = 0; i < this.coupled.length; i++) {
-            sum += Math.sin(this.lastTheta - this.coupled[ i ].lastTheta);
+            sum += this.lastTheta - this.coupled[ i ].lastTheta;
         }
         this.nextTheta = Math.sin(this.omega + ((Oscillator.coeff / this.coupled.length) * sum));
     };
@@ -172,6 +174,18 @@
     };
 
     /**
+     * Generate gaussian-distributed numbers with the Central number theorem.
+     * @param {Number} times Integer representing how large numbers to add to simulate gaussian distribution.
+     */
+    function gaussianRand (times) {
+        var rand = 0;
+        for (var i = 1; i <= times; i++) {
+            rand += Math.random();
+        }
+        return rand / times;
+    }
+
+    /**
      *
      * @constructor
      */
@@ -185,7 +199,8 @@
 
     window.App = !(typeof window['App'] !== 'undefined') ? (function () {
 
-        var NUMBERS_OF_OSCILLATOR = 5;
+        var oscillators = parseInt(url.searchParams.get("oscillators") ,10);
+        var NUMBERS_OF_OSCILLATOR = isNaN(oscillators) ? 10 : oscillators;
         var STEPS_TO_REMEMBER = 50;
         var intervalTimer = null;
 
@@ -216,10 +231,12 @@
                     Oscillator.coeff = k;
                 }
 
-
+                var omegaDist = {0.0: 0, 0.1:0, 0.2:0, 0.3:0, 0.4: 0,
+                    0.5: 0, 0.6:0, 0.7:0, 0.8:0, 0.9: 0};
                 for (var i = 0; i < NUMBERS_OF_OSCILLATOR; i++) {
                     // Constructs an oscillator.
-                    oscillators.push(new Oscillator());
+                    var oscillator = new Oscillator()
+                    oscillators.push(oscillator);
                     // Constructs an oscillator value holder.
                     oscillatorValues.push([]);
 
@@ -241,19 +258,25 @@
                     }
                     orderParameterTable.appendChild(tr);
                     orderParameterCells.push(cells);
+
+                    omegaDist[oscillator.omega.toFixed(1)] += 1;
+                }
+                console.log("Omega distribution:");
+                for (var key in omegaDist) {
+                    console.log("[" + key + "]" + omegaDist[key]);
                 }
                 var lineGraph = new LineGraph(oscillatorValues, orderParameters);
 
                 // Sets coupled oscillators
                 for (var target = 0; target < oscillators.length; target++) {
-                    console.log("connecting #" + target + " to:");
+                    //console.log("connecting #" + target + " to:");
                     for (i = 0; i < oscillators.length; i++) {
                         if (i === target) {
                             // Skips if the setting target and the oscillator to be set are same.
                             continue;
                         }
                         oscillators[target].addCoupledOscillator(oscillators[i]);
-                        console.log("\t#" + i);
+                        //console.log("\t#" + i);
                     }
                 }
 
@@ -293,10 +316,8 @@
                                 var blueOrGreen = Math.round((1 - partialOrderParameter) * 255).toString(16);
                                 // Add leading zeros
                                 blueOrGreen = ("00" + blueOrGreen).substr(-2);
-                                console.log("mapped " + partialOrderParameter + " to " + blueOrGreen)
                                 orderParameterCells[i][k].td.style.backgroundColor = "#FF" +
                                     blueOrGreen + blueOrGreen;
-                                console.log("#FF" + blueOrGreen + blueOrGreen)
                             }
                         }
 
@@ -311,7 +332,7 @@
                     }
                     // Calculates the order parameter
                     var absoluteSum = Math.sqrt(Math.pow(sum_of_euler_real, 2) + Math.pow(sum_of_euler_imaginary, 2));
-                    console.log("m=" + (absoluteSum / oscillators.length));
+                    //console.log("m=" + (absoluteSum / oscillators.length));
                     orderParameters.push((absoluteSum / oscillators.length));
 
                     lineGraph.render();
