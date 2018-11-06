@@ -13,6 +13,7 @@
         this.omega = 0;
         this.nextTheta = 0;
         this.lastTheta = 0;
+        this.step = 0;
 
         // 1st term
         // Value between 0 and 1.0 will be stored
@@ -39,14 +40,18 @@
         for (var i = 0; i < this.coupled.length; i++) {
             sum += Math.sin(this.lastTheta - this.coupled[ i ].lastTheta);
         }
-        this.omega += 0.1;
-        console.log("next omega:" + this.omega);
-        this.nextTheta = this.omega + ((Oscillator.coeff / this.coupled.length) * sum);
-        this.nextTheta %= 1.0;
+        var theta = this.omega + ((Oscillator.coeff / this.coupled.length) * sum);
+        // Solve ODE with Runge-Kutta method
+        var k1 = theta;
+        var k2 = this.lastTheta + k1 * this.step / 2;
+        var k3 = this.lastTheta + k2 * this.step / 2;
+        var k4 = this.lastTheta + k3;
+        this.nextTheta = Math.sin(this.lastTheta + (k1 + 2 * k2 + 2 * k3 + k4) / 6);
     };
 
     Oscillator.prototype.updateTheta = function () {
         this.lastTheta = this.nextTheta;
+        this.step++;
     };
 
     Oscillator.prototype.getPhase = function () {
@@ -302,7 +307,7 @@
                             // Removes the oldest value if the array exceeds the limit.
                             oscillatorValues[i].shift();
                         }
-                        oscillatorValues[i].push(oscillators[i].lastTheta);
+                        oscillatorValues[i].push(Math.sin(oscillators[i].lastTheta));
 
                         // Updates the order parameter table.
                         for (var k = i + 1; k < oscillators.length; k++) {
