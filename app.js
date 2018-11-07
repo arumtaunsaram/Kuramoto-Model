@@ -35,18 +35,18 @@
             this.nextTheta = this.omega;
             return;
         }
-
+        // Here is Kuramoto Model
         var sum = 0.0;
         for (var i = 0; i < this.coupled.length; i++) {
             sum += Math.sin(this.lastTheta - this.coupled[ i ].lastTheta);
         }
         var theta = this.omega + ((Oscillator.coeff / this.coupled.length) * sum);
-        // Solve ODE with Runge-Kutta method
+        // and solve its ODE with Runge-Kutta method
         var k1 = theta;
         var k2 = this.lastTheta + k1 * this.step / 2;
         var k3 = this.lastTheta + k2 * this.step / 2;
         var k4 = this.lastTheta + k3;
-        this.nextTheta = Math.sin(this.lastTheta + (k1 + 2 * k2 + 2 * k3 + k4) / 6);
+        this.nextTheta = this.lastTheta + (k1 + 2 * k2 + 2 * k3 + k4) / 6;
     };
 
     Oscillator.prototype.updateTheta = function () {
@@ -55,7 +55,7 @@
     };
 
     Oscillator.prototype.getPhase = function () {
-        return Math.asin(this.lastTheta);
+        return this.lastTheta;
     }
 
     /**
