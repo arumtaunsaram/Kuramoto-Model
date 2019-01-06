@@ -41,13 +41,13 @@
             sum += Math.sin(this.lastTheta - this.coupled[ i ].lastTheta);
         }
         // var theta = this.omega + ((Oscillator.coeff / this.coupled.length) * sum);
-        this.nextTheta += this.omega + ((Oscillator.coeff / this.coupled.length) * sum);
+        this.nextTheta += this.omega - ((Oscillator.coeff / (this.coupled.length - 1)) * sum);
         // and solve its ODE with Runge-Kutta method
         // var k1 = theta;
         // var k2 = this.lastTheta + k1 * this.step / 2;
         // var k3 = this.lastTheta + k2 * this.step / 2;
         // var k4 = this.lastTheta + k3;
-        // this.nextTheta = this.lastTheta + (k1 + 2 * k2 + 2 * k3 + k4) / 6;
+        // this.nextTheta += this.lastTheta + (k1 + 2 * k2 + 2 * k3 + k4) / 6;
     };
 
     Oscillator.prototype.updateTheta = function () {
@@ -308,7 +308,7 @@
                             // Removes the oldest value if the array exceeds the limit.
                             oscillatorValues[i].shift();
                         }
-                        oscillatorValues[i].push(Math.sin(oscillators[i].lastTheta));
+                        oscillatorValues[i].push(Math.sin(oscillators[i].lastTheta % (Math.PI * 2)));
 
                         // Updates the order parameter table.
                         for (var k = i + 1; k < oscillators.length; k++) {
