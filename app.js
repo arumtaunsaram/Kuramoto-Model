@@ -40,14 +40,7 @@
         for (var i = 0; i < this.coupled.length; i++) {
             sum += Math.sin(this.lastTheta - this.coupled[ i ].lastTheta);
         }
-        // var theta = this.omega + ((Oscillator.coeff / this.coupled.length) * sum);
         this.nextTheta += this.omega - ((Oscillator.coeff / (this.coupled.length - 1)) * sum);
-        // and solve its ODE with Runge-Kutta method
-        // var k1 = theta;
-        // var k2 = this.lastTheta + k1 * this.step / 2;
-        // var k3 = this.lastTheta + k2 * this.step / 2;
-        // var k4 = this.lastTheta + k3;
-        // this.nextTheta += this.lastTheta + (k1 + 2 * k2 + 2 * k3 + k4) / 6;
     };
 
     Oscillator.prototype.updateTheta = function () {
